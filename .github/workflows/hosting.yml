@@ -1,0 +1,43 @@
+name: Hosting
+
+on:
+  push:
+    paths:
+      - .github/workflows/hosting.yaml
+    branches:
+      - main
+  schedule:
+    - cron: '0 */4 * * *'
+  workflow_run:
+    workflows: [ 'CI' ]
+    types: [ completed ]
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  HOSTING_PATH: .hosting
+
+jobs:
+  run-app:
+    
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create .env file
+        working-directory: ${{ env.HOSTING_PATH }}
+        run: |
+          cat <<EOT > .env
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          ADMIN_ID: ${{ vars.ADMIN_ID }}
+          RATE_LIMIT: ${{ vars.RATE_LIMIT }}
+          EOT
+          
+      - name: Run app
+        working-directory: ${{ env.HOSTING_PATH }}
+        run: |
+          docker compose -f docker-compose.hosting.yml up --pull=always

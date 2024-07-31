@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  telegram-bot:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/telegram-bot-suggest-news:${GITHUB_SHA:-latest}
+    restart: always
+
+    volumes:
+    - ./.env.local:/app/.env.local:ro

@@ -1,0 +1,43 @@
+name: Build and Push Image
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.22
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build Docker image
+      run: docker build . -t ghcr.io/${{ github.repository_owner }}/telegram-bot-suggest-news:${{ github.sha }}
+
+    - name: Set latest tag
+      run: docker build . -t ghcr.io/${{ github.repository_owner }}/telegram-bot-suggest-news:latest
+
+    - name: Push Docker image
+      run: docker push ghcr.io/${{ github.repository_owner }}/telegram-bot-suggest-news --all-tags
